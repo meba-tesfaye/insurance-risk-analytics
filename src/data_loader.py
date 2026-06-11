@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 from typing import Tuple, List
 
@@ -6,7 +7,8 @@ from typing import Tuple, List
 def load_insurance_data(file_path: str) -> pd.DataFrame:
     """Loads the ACIS historical insurance dataset from a CSV/text file.
 
-    Handles file verification and returns a baseline DataFrame.
+    Handles file verification, parses dates, calculates key domain metrics, 
+    and returns a baseline DataFrame.
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(
@@ -19,6 +21,21 @@ def load_insurance_data(file_path: str) -> pd.DataFrame:
         df = pd.read_csv(file_path, sep=None, engine="python")
     except Exception as e:
         raise IOError(f"Failed parsing dataset: {str(e)}")
+
+    # --- Domain Specific Transformations ---
+    if "TransactionMonth" in df.columns:
+        df["TransactionMonth"] = pd.to_datetime(df["TransactionMonth"])
+
+    # Ensure localized identifier features are categorical strings, not numbers
+    categorical_ids = ["PolicyID", "UnderwrittenCoverID", "PostalCode", "Mmcode"]
+    for col in categorical_ids:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+
+    # Calculate derived metrics to anchor risk analytics
+    if "TotalClaims" in df.columns and "TotalPremium" in df.columns:
+        df["LossRatio"] = np.where(df["TotalPremium"] > 0, df["TotalClaims"] / df["TotalPremium"], 0)
+        df["Margin"] = df["TotalPremium"] - df["TotalClaims"]
 
     return df
 
