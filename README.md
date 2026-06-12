@@ -24,3 +24,9 @@ An end-to-end predictive modeling and risk analytics system developed for AlphaC
 
 2\. Run the automated linting checks locally: `flake8 .`
 
+## 🛠️ Pipeline Automation & Testing
+
+### Running the Data Pipeline
+This project utilizes Data Version Control (DVC) to manage and reproduce data tracking pipelines. To reproduce the preprocessing and multi-model training steps automatically, run:
+```bash
+dvc repro

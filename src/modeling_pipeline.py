@@ -7,12 +7,29 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 def preprocess_insurance_data(df, target_col='TotalClaims'):
     """
-    Cleans data, drops identifiers, and removes target leakage columns like ClaimAmount.
+    Cleans data, handles missing values explicitly, drops identifiers, 
+    and removes target leakage columns like ClaimAmount.
     """
+    # Clone to avoid changing original dataframe
+    processed_df = df.copy()
+    
+    # --- STRATEGY: Explicit Missing Value Handling ---
+    # Fill numerical missing values with the median
+    num_cols = processed_df.select_dtypes(include=['number']).columns
+    for col in num_cols:
+        if processed_df[col].isnull().sum() > 0:
+            processed_df[col] = processed_df[col].fillna(processed_df[col].median())
+            
+    # Fill categorical missing values with the mode
+    cat_cols = processed_df.select_dtypes(include=['object']).columns
+    for col in cat_cols:
+        if processed_df[col].isnull().sum() > 0:
+            processed_df[col] = processed_df[col].fillna(processed_df[col].mode()[0])
+    
     # Add 'ClaimAmount' to the drop list to prevent data leakage
     cols_to_drop = ['CustomerID', 'TransactionDate', 'VehicleModel', 'ClaimAmount']
-    existing_drops = [col for col in cols_to_drop if col in df.columns]
-    processed_df = df.drop(columns=existing_drops)
+    existing_drops = [col for col in cols_to_drop if col in processed_df.columns]
+    processed_df = processed_df.drop(columns=existing_drops)
     
     # Separate features and target
     X = processed_df.drop(columns=[target_col])
