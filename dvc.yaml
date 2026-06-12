@@ -1,0 +1,9 @@
+stages:
+  preprocess_and_train:
+    cmd: python -c "import src.modeling_pipeline as mp; import pandas as pd; df=pd.read_csv('data/insurance_data.csv'); X,y=mp.preprocess_insurance_data(df); mp.train_and_evaluate_all_models(X,y)"
+    deps:
+      - src/modeling_pipeline.py
+      - data/insurance_data.csv
+    outs:
+      - models/README.md:
+          cache: false
